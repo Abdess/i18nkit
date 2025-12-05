@@ -1,0 +1,123 @@
+{
+  "name": "i18nkit",
+  "version": "1.0.0",
+  "description": "Universal i18n CLI - extract translation keys, sync language files, detect missing translations. Extensible plugin architecture.",
+  "author": {
+    "name": "Abdessamad DERRAZ",
+    "url": "https://github.com/Abdess"
+  },
+  "license": "MIT",
+  "type": "commonjs",
+  "exports": {
+    ".": {
+      "types": "./types/index.d.ts",
+      "default": "./bin/cli.js"
+    },
+    "./package.json": "./package.json"
+  },
+  "bin": {
+    "i18nkit": "./bin/cli.js",
+    "i18n": "./bin/cli.js"
+  },
+  "main": "./bin/cli.js",
+  "types": "./types/index.d.ts",
+  "sideEffects": false,
+  "engines": {
+    "node": ">=22.0.0",
+    "npm": ">=10.0.0"
+  },
+  "devEngines": {
+    "runtime": {
+      "name": "node",
+      "version": ">=22.0.0",
+      "onFail": "error"
+    },
+    "packageManager": {
+      "name": "npm",
+      "version": ">=10.0.0",
+      "onFail": "warn"
+    }
+  },
+  "packageManager": "npm@10.9.2",
+  "publishConfig": {
+    "provenance": true,
+    "access": "public",
+    "registry": "https://registry.npmjs.org/"
+  },
+  "files": [
+    "bin",
+    "types",
+    "README.md",
+    "LICENSE",
+    "CHANGELOG.md"
+  ],
+  "keywords": [
+    "i18n",
+    "internationalization",
+    "localization",
+    "l10n",
+    "translation",
+    "extract",
+    "sync",
+    "cli",
+    "transloco",
+    "angular",
+    "primeng",
+    "zero-dependency",
+    "missing-translations",
+    "orphan-keys",
+    "plugin"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Abdess/i18nkit.git"
+  },
+  "bugs": {
+    "url": "https://github.com/Abdess/i18nkit/issues"
+  },
+  "homepage": "https://github.com/Abdess/i18nkit#readme",
+  "funding": {
+    "type": "github",
+    "url": "https://github.com/sponsors/Abdess"
+  },
+  "scripts": {
+    "test": "node --test tests/**/*.test.js",
+    "test:coverage": "node --test --experimental-test-coverage tests/**/*.test.js",
+    "test:watch": "node --test --watch tests/**/*.test.js",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "typecheck": "tsc --noEmit",
+    "validate": "npm run lint && npm run format:check && npm run typecheck && npm test",
+    "docs": "jsdoc -c jsdoc.json",
+    "docs:serve": "npx serve docs/api",
+    "prepare": "husky",
+    "prepublishOnly": "npm run validate",
+    "prepack": "npm run validate",
+    "version": "npm run format && git add -A",
+    "postversion": "git push && git push --tags",
+    "release": "npm version patch && npm publish"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.17.0",
+    "@types/node": "^22.10.2",
+    "clean-jsdoc-theme": "^4.3.0",
+    "eslint": "^9.17.0",
+    "globals": "^15.14.0",
+    "husky": "^9.1.7",
+    "jsdoc": "^4.0.4",
+    "lint-staged": "^15.3.0",
+    "prettier": "^3.4.2",
+    "typescript": "^5.7.2"
+  },
+  "lint-staged": {
+    "*.js": [
+      "eslint --fix",
+      "prettier --write"
+    ],
+    "*.{json,md,yml,yaml}": [
+      "prettier --write"
+    ]
+  }
+}
