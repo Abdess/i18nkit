@@ -1,0 +1,28 @@
+{
+  "$schema": "https://json.schemastore.org/jsdoc-1.0.0.json",
+  "source": {
+    "include": ["bin/core", "bin/commands", "bin/plugins"],
+    "includePattern": ".+\\.js$",
+    "excludePattern": "(node_modules|tests)"
+  },
+  "opts": {
+    "destination": "docs/api",
+    "recurse": true,
+    "readme": "README.md",
+    "template": "node_modules/clean-jsdoc-theme",
+    "encoding": "utf8",
+    "theme_opts": {
+      "title": "i18nkit",
+      "favicon": "assets/logo-icon.png"
+    }
+  },
+  "plugins": ["plugins/markdown"],
+  "templates": {
+    "cleverLinks": true,
+    "monospaceLinks": true,
+    "default": {
+      "outputSourceFiles": true,
+      "includeDate": false
+    }
+  }
+}

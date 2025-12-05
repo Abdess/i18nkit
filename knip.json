@@ -1,0 +1,11 @@
+{
+  "$schema": "https://unpkg.com/knip@5/schema.json",
+  "entry": ["bin/cli.js", "bin/commands/*.js", "bin/plugins/*.js"],
+  "project": ["bin/**/*.js", "tests/**/*.js"],
+  "ignore": ["examples/**"],
+  "ignoreDependencies": ["lint-staged"],
+  "ignoreExportsUsedInFile": true,
+  "rules": {
+    "exports": "off"
+  }
+}
