@@ -1,0 +1,13 @@
+{
+  "Welcome": "common.welcome",
+  "Submit": "common.buttons.submit",
+  "Cancel": "common.buttons.cancel",
+  "Delete": "common.buttons.delete",
+  "Save": "common.buttons.save",
+  "Loading...": "common.loading",
+  "Error": "common.error",
+  "Success": "common.success",
+  "Are you sure?": "common.confirm",
+  "Yes": "common.yes",
+  "No": "common.no"
+}
