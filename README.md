@@ -306,5 +306,4 @@ MIT
 
 [GitHub](https://github.com/Abdess/i18nkit) ·
 [npm](https://npmjs.com/package/i18nkit) ·
-[Issues](https://github.com/Abdess/i18nkit/issues) ·
-[Plugin Guide](PLUGINS.md)
+[Issues](https://github.com/Abdess/i18nkit/issues) · [Plugin Guide](PLUGINS.md)
