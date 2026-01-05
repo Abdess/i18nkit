@@ -2,7 +2,7 @@
 
 ![i18nkit](assets/logo-with-title.png)
 
-[![npm](https://img.shields.io/npm/v/i18nkit.svg)](https://npmjs.com/package/i18nkit)
+[![npm](https://img.shields.io/npm/v/@abdess76/i18nkit.svg)](https://npmjs.com/package/@abdess76/i18nkit)
 [![node](https://img.shields.io/badge/node-%3E%3D22-brightgreen.svg)](https://nodejs.org)
 [![license](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 [![zero-deps](https://img.shields.io/badge/dependencies-0-blue.svg)](package.json)
@@ -38,7 +38,7 @@ Extensible via plugins for other frameworks and libraries.
 ### 1. Install
 
 ```bash
-npm install --save-dev i18nkit
+npm install --save-dev @abdess76/i18nkit
 ```
 
 ### 2. Add scripts to package.json
@@ -305,5 +305,5 @@ MIT
 ---
 
 [GitHub](https://github.com/Abdess/i18nkit) ·
-[npm](https://npmjs.com/package/i18nkit) ·
+[npm](https://npmjs.com/package/@abdess76/i18nkit) ·
 [Issues](https://github.com/Abdess/i18nkit/issues) · [Plugin Guide](PLUGINS.md)
