@@ -50,7 +50,7 @@ npm install --save-dev @abdess76/i18nkit
     "i18n:apply": "i18nkit --auto-apply --init-langs en,fr",
     "i18n:check": "i18nkit --check-sync --strict",
     "i18n:orphans": "i18nkit --find-orphans --strict",
-    "i18n:translate": "i18nkit --translate fr:en",
+    "i18n:translate": "i18nkit --translate en:fr",
     "i18n:watch": "i18nkit --watch",
     "i18n:ci": "npm run i18n:check && npm run i18n:orphans"
   }
@@ -88,7 +88,7 @@ npm run i18n:ci
 <input [placeholder]="'home.forms.enter_your_name' | transloco" />
 ```
 
-**Generated `fr.json`:**
+**Generated `en.json`:**
 
 ```json
 {
@@ -121,7 +121,7 @@ npm run i18n:ci
 | `npm run i18n:apply`     | `--auto-apply --init-langs` | Extract + replace + create   |
 | `npm run i18n:check`     | `--check-sync --strict`     | Validate files are in sync   |
 | `npm run i18n:orphans`   | `--find-orphans --strict`   | Find unused keys             |
-| `npm run i18n:translate` | `--translate fr:en`         | Translate via API            |
+| `npm run i18n:translate` | `--translate en:fr`         | Translate via API            |
 | `npm run i18n:watch`     | `--watch`                   | Re-run on file changes       |
 
 ## Configuration
