@@ -1,6 +1,6 @@
 {
   "name": "@abdess76/i18nkit",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "description": "Universal i18n CLI - extract translation keys, sync language files, detect missing translations. Extensible plugin architecture.",
   "author": {
     "name": "Abdessamad DERRAZ",
@@ -16,8 +16,7 @@
     "./package.json": "./package.json"
   },
   "bin": {
-    "i18nkit": "./bin/cli.js",
-    "i18n": "./bin/cli.js"
+    "i18nkit": "./bin/cli.js"
   },
   "main": "./bin/cli.js",
   "types": "./types/index.d.ts",
