@@ -102,6 +102,19 @@ npm run i18n:ci
 
 ## Commands
 
+### Core Commands
+
+| Command        | Description                              |
+| -------------- | ---------------------------------------- |
+| `extract`      | Extract i18n strings from source files   |
+| `check-sync`   | Compare language files for missing keys  |
+| `find-orphans` | Find translation keys not used in source |
+| `translate`    | Translate a language file via API        |
+| `watch`        | Watch for file changes and re-run        |
+| `backup`       | Manage backup sessions and restore files |
+
+### NPM Scripts Examples
+
 | Script                   | Command                     | Description                  |
 | ------------------------ | --------------------------- | ---------------------------- |
 | `npm run i18n`           | `--lang fr --merge`         | Extract, merge with existing |
@@ -188,6 +201,105 @@ jobs:
       - run: npm run i18n:ci
 ```
 
+## Backup & Restore
+
+Source files are backed up before modification. Full session management with
+restore, cleanup, and audit capabilities.
+
+### Automatic Backup
+
+```bash
+# Backup enabled by default with --auto-apply
+npm run i18n:apply
+
+# Disable backup if needed
+npx i18nkit --auto-apply --no-backup
+
+# Initialize backup structure explicitly
+npx i18nkit --init-backups --auto-gitignore
+```
+
+### Session Structure
+
+```text
+.i18nkit/
+├── .gitignore              # Auto-managed (excludes backups/, report.json)
+├── report.json             # Current extraction report
+└── backups/
+    └── 2026-01-05_15-39-28_apply_ae9c/
+        ├── manifest.json   # Session metadata with status tracking
+        ├── report.json     # Archived extraction report
+        └── src/            # Original source files
+```
+
+### Session Management
+
+```bash
+# List all backup sessions
+npx i18nkit --list-backups
+
+# Show detailed info for a session
+npx i18nkit --backup-info 2026-01-05_15-39-28_apply_ae9c
+```
+
+### Restore from Backup
+
+```bash
+# Restore specific session
+npx i18nkit --restore 2026-01-05_15-39-28_apply_ae9c
+
+# Restore latest session
+npx i18nkit --restore-latest
+
+# Preview restore without applying
+npx i18nkit --restore-latest --dry-run
+```
+
+### Manual Cleanup
+
+```bash
+# Clean old sessions (interactive)
+npx i18nkit --cleanup-backups
+
+# Keep only last 5 sessions
+npx i18nkit --cleanup-backups --keep 5
+
+# Remove sessions older than 7 days
+npx i18nkit --cleanup-backups --max-age 7
+
+# Combine options
+npx i18nkit --cleanup-backups --keep 3 --max-age 14
+```
+
+### Auto-Cleanup Configuration
+
+Old sessions are automatically cleaned up based on configuration.
+
+```javascript
+// i18nkit.config.js
+module.exports = {
+  backup: {
+    enabled: true,
+    maxSessions: 10, // Keep max 10 sessions
+    retentionDays: 30, // Delete sessions older than 30 days
+    autoCleanup: true, // Auto-cleanup on each run
+  },
+};
+```
+
+### Session Status
+
+Sessions track their lifecycle status:
+
+| Status        | Description                      |
+| ------------- | -------------------------------- |
+| `pending`     | Session created, not started     |
+| `backing_up`  | Backup in progress               |
+| `in_progress` | Apply operation running          |
+| `completed`   | Successfully finished            |
+| `failed`      | Error occurred (check manifest)  |
+| `restored`    | Files restored from this session |
+
 ## Key Mapping
 
 Override auto-generated keys with `.i18n-keys.json`:
@@ -251,23 +363,70 @@ implementations.
 
 ## Options
 
+### Global Options
+
 ```text
+--config <path>       Path to config file (default: i18nkit.config.js)
 --src <path>          Source directory (default: src/app)
---i18n-dir <path>     i18n directory (default: src/assets/i18n)
---lang <code>         Language code
---format <type>       nested | flat (default: nested)
---merge               Merge with existing translations
---auto-apply          Extract and apply pipes
---init-langs <codes>  Create language files (e.g., en,fr,es)
---check-sync          Compare language files
---find-orphans        Find unused keys
---translate <src:tgt> Translate via API (e.g., fr:en)
---deepl               Use DeepL API
---watch               Watch mode
---dry-run             Preview only
---strict              Exit 1 on issues
---ci                  CI mode (strict + json output)
+--locales <path>      Locales directory (default: src/assets/i18n)
+--default-lang <code> Default language (default: fr)
+--dry-run             Preview changes without writing
 --verbose             Detailed output
+--help, -h            Show help
+--version, -v         Show version
+```
+
+### Extraction Options
+
+```text
+--lang <code>         Language code for output file
+--format <type>       Output format: nested | flat (default: nested)
+--merge               Merge with existing translations
+--auto-apply          Extract AND apply pipes in one command
+--init-langs <codes>  Create language files (e.g., en,fr,es)
+--include-translated  Include already translated strings
+--extract-ts-objects  Extract from TypeScript object literals
+--skip-translated     Skip already translated strings (default: true)
+```
+
+### Validation Options
+
+```text
+--check-sync          Compare language files for missing keys
+--find-orphans        Find unused translation keys
+--strict              Exit with error code 1 on issues
+--ci                  CI mode (strict + json output)
+```
+
+### Translation Options
+
+```text
+--translate <src:tgt> Translate via API (e.g., fr:en)
+--deepl               Use DeepL API (requires DEEPL_API_KEY)
+--mymemory            Use MyMemory API (default)
+--email <email>       Email for MyMemory rate limits
+```
+
+### Backup Options
+
+```text
+--backup              Enable backup before modifications (default)
+--no-backup           Disable backup
+--list-backups        List all backup sessions
+--backup-info <id>    Show backup session details
+--restore [id]        Restore from backup (latest if no id)
+--restore-latest      Restore from most recent backup
+--cleanup-backups     Remove old backup sessions
+--keep <n>            Keep last n sessions (default: 10)
+--max-age <days>      Max session age in days (default: 30)
+--init-backups        Initialize backup directory structure
+--auto-gitignore      Auto-add .i18nkit to .gitignore
+```
+
+### Watch Options
+
+```text
+--watch               Watch mode for file changes
 ```
 
 ## Exit Codes

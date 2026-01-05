@@ -19,13 +19,9 @@ const plugins = require('./plugin-resolver');
 const config = require('./config');
 const detector = require('./detector');
 const help = require('./help-generator');
-const fsAdapter = require('./fs-adapter');
 const logUtils = require('./log-utils');
 
 module.exports = {
-  setFsAdapter: fsAdapter.setAdapter,
-  resetFsAdapter: fsAdapter.resetAdapter,
-
   getArgValue: config.getArgValue,
 
   readJsonFile: json.readJsonFile,

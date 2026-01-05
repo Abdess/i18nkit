@@ -6,6 +6,24 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.4] - 05-01-2026
+
+### Added
+
+- Backup system with session-linked reports
+- Automatic report archival in backup sessions
+- Restore/rollback capabilities from backup sessions
+- Auto-cleanup of old backup sessions
+- Gitignore auto-management for `.i18nkit` directory
+- Manifest schema with `reportFile` field for audit trail
+
+### Changed
+
+- Backup directory renamed from `.i18n` to `.i18nkit`
+- Report files now stored alongside backup sessions
+- Improved session status tracking (pending, ready, in_progress, completed,
+  failed)
+
 ## [1.0.3] - 05-01-2026
 
 ### Changed

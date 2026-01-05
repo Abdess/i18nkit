@@ -2,7 +2,7 @@
 
 const fs = require('./fs-adapter');
 const readline = require('readline');
-const { createBackup, getBackupFiles } = require('./backup');
+const { getBackupFiles } = require('./backup');
 
 const isValidFinding = f => f.file && f.text && f.key && !f.context?.startsWith('ts_');
 
@@ -81,8 +81,7 @@ function applyReplacementsToContent(content, fileFindings, adapter) {
 }
 
 function tryUpdateTsImports(tsFile, opts) {
-  const { backupDir, adapter, backup = true, dryRun = false } = opts;
-  createBackup(tsFile, backupDir, { enabled: backup, dryRun });
+  const { adapter, dryRun = false } = opts;
   const tsContent = fs.readFileSync(tsFile, 'utf-8');
   const updatedTs = adapter.updateImports(tsContent);
   if (updatedTs === tsContent) {

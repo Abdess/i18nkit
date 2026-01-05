@@ -109,8 +109,8 @@ async function loadMergeResult(ctx) {
 }
 
 function getAutoApplyOpts(ctx) {
-  const { srcDir, backupDir, adapter, backup, dryRun, verbose, interactive, log } = ctx;
-  return { srcDir, backupDir, adapter, backup, dryRun, verbose, interactive, log };
+  const { srcDir, backupDir, reportDir, adapter, backup, dryRun, verbose, interactive, log } = ctx;
+  return { srcDir, backupDir, reportDir, adapter, backup, dryRun, verbose, interactive, log };
 }
 
 async function runAutoApply(findings, ctx) {

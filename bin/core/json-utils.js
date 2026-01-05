@@ -109,17 +109,21 @@ const isPlainObject = v => typeof v === 'object' && v !== null && !Array.isArray
  * Flattens nested JSON to dot-notation keys
  * @param {Object} obj
  * @param {string} [prefix='']
+ * @param {Object} [result={}]
  * @returns {Record<string, string>}
  * @example
  * flattenJson({ user: { name: 'John' } }) // { 'user.name': 'John' }
  */
-function flattenJson(obj, prefix = '') {
-  return Object.entries(obj).reduce((acc, [key, value]) => {
+function flattenJson(obj, prefix = '', result = {}) {
+  for (const [key, value] of Object.entries(obj)) {
     const fullKey = buildKey(prefix, escapeKey(key));
-    return isPlainObject(value) ?
-        { ...acc, ...flattenJson(value, fullKey) }
-      : { ...acc, [fullKey]: value };
-  }, {});
+    if (isPlainObject(value)) {
+      flattenJson(value, fullKey, result);
+    } else {
+      result[fullKey] = value;
+    }
+  }
+  return result;
 }
 
 function ensurePath(obj, parts) {

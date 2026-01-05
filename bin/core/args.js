@@ -98,6 +98,11 @@ const COMMAND_ALIASES = {
   '--find-orphans': 'find-orphans',
   '--check-sync': 'check-sync',
   '--watch': 'watch',
+  '--list-backups': 'backup',
+  '--restore': 'backup',
+  '--cleanup-backups': 'backup',
+  '--backup-info': 'backup',
+  '--init-backups': 'backup',
 };
 
 const POSITIONAL_COMMANDS = [
@@ -107,6 +112,15 @@ const POSITIONAL_COMMANDS = [
   'apply',
   'watch',
   'extract',
+  'backup',
+];
+
+const BACKUP_FLAGS = [
+  '--list-backups',
+  '--restore',
+  '--cleanup-backups',
+  '--backup-info',
+  '--init-backups',
 ];
 
 function detectFromFlags(args) {
@@ -115,6 +129,9 @@ function detectFromFlags(args) {
   }
   if (args.some(a => a.startsWith('--apply'))) {
     return 'apply';
+  }
+  if (args.some(a => BACKUP_FLAGS.includes(a))) {
+    return 'backup';
   }
   const flagCmd = args.find(a => COMMAND_ALIASES[a]);
   return flagCmd ? COMMAND_ALIASES[flagCmd] : null;

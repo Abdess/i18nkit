@@ -33,11 +33,16 @@ const readdirSync = (path, options) => fs.readdirSync(path, options);
 const statSync = path => fs.statSync(path);
 const watch = (path, options, listener) => fs.watch(path, options, listener);
 const mkdirSync = (path, options) => fs.mkdirSync(path, options);
+const copyFileSync = (src, dest) => fs.copyFileSync(src, dest);
 
 const readFile = (path, encoding = 'utf-8') => fsp.readFile(path, encoding);
 const writeFile = (path, data, encoding = 'utf-8') => fsp.writeFile(path, data, encoding);
 const readdir = (path, options) => fsp.readdir(path, options);
 const mkdir = (path, options) => fsp.mkdir(path, options);
+const rename = (oldPath, newPath) => fsp.rename(oldPath, newPath);
+const unlink = path => fsp.unlink(path);
+const copyFile = (src, dest) => fsp.copyFile(src, dest);
+const rm = (path, options) => fsp.rm(path, options);
 
 module.exports = {
   setAdapter,
@@ -47,10 +52,15 @@ module.exports = {
   writeFileSync,
   readdirSync,
   mkdirSync,
+  copyFileSync,
   statSync,
   watch,
   readFile,
   writeFile,
   readdir,
   mkdir,
+  rename,
+  unlink,
+  copyFile,
+  rm,
 };

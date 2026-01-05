@@ -10,6 +10,17 @@ const path = require('path');
 const { decodeHtmlEntities } = require('./parser-utils');
 
 const MAX_KEY_LENGTH = 50;
+const IGNORED_SCOPE_FOLDERS = new Set([
+  'components',
+  'pages',
+  'shared',
+  'common',
+  'features',
+  'dialogs',
+  'forms',
+  'ui',
+  'lib',
+]);
 
 /**
  * Converts text to a translation key (lowercase, underscored, max 50 chars)
@@ -49,18 +60,7 @@ function pathToScope(filePath, baseDir) {
     .replace(/\.(component|html|ts)$/g, '')
     .replace(/\.component$/, '');
 
-  const ignoredFolders = [
-    'components',
-    'pages',
-    'shared',
-    'common',
-    'features',
-    'dialogs',
-    'forms',
-    'ui',
-    'lib',
-  ];
-  const significantParts = parts.filter(p => !ignoredFolders.includes(p));
+  const significantParts = parts.filter(p => !IGNORED_SCOPE_FOLDERS.has(p));
 
   const scope = significantParts
     .concat(fileName !== 'app' && fileName !== parts.at(-1) ? [fileName] : [])

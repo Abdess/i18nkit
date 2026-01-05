@@ -8,7 +8,7 @@
 
 const fs = require('./fs-adapter');
 const path = require('path');
-const { createBackup } = require('./backup');
+const { withBackup } = require('./backup');
 const {
   groupFindingsByFile,
   confirmFileModifications,
@@ -70,13 +70,12 @@ function buildFileResult(ctx) {
 }
 
 function processFileReplacements(relativeFile, fileFindings, opts) {
-  const { srcDir, backupDir, backup = true, dryRun = false, verbose = false, adapter } = opts;
+  const { srcDir, verbose = false, adapter } = opts;
   const filePath = path.join(srcDir, relativeFile);
   const originalContent = loadFileForReplacement(filePath, relativeFile, verbose);
   if (!originalContent) {
     return null;
   }
-  createBackup(filePath, backupDir, { enabled: backup, dryRun });
   const { content: replaced, count } = applyReplacementsToContent(
     originalContent,
     fileFindings,
@@ -125,6 +124,90 @@ function processAllFiles(findingsByFile, opts) {
   return { totalFiles, totalReplacements, modifiedFiles };
 }
 
+function getFilesToBackup(findingsByFile, opts) {
+  const { srcDir } = opts;
+  const files = [];
+  for (const [relativeFile] of findingsByFile) {
+    const filePath = path.join(srcDir, relativeFile);
+    if (fs.existsSync(filePath)) {
+      files.push(filePath);
+    }
+  }
+  return files;
+}
+
+function backupFilesForSession(filesToBackup, sessionHelpers) {
+  for (const filePath of filesToBackup) {
+    if (sessionHelpers?.backupFile) {
+      sessionHelpers.backupFile(filePath);
+    }
+  }
+}
+
+function saveReportIfNeeded(sessionHelpers, reportPath) {
+  if (reportPath && sessionHelpers?.saveReport) {
+    sessionHelpers.saveReport(reportPath);
+  }
+}
+
+function transitionSessionState(sessionHelpers) {
+  if (sessionHelpers?.markReady) {
+    sessionHelpers.markReady();
+  }
+  if (sessionHelpers?.beginModifications) {
+    sessionHelpers.beginModifications();
+  }
+}
+
+function prepareSession(sessionHelpers, reportPath) {
+  saveReportIfNeeded(sessionHelpers, reportPath);
+  transitionSessionState(sessionHelpers);
+}
+
+function createApplyExecutor(ctx) {
+  const { filesToBackup, reportPath, findingsByFile, opts } = ctx;
+  return sessionHelpers => {
+    backupFilesForSession(filesToBackup, sessionHelpers);
+    prepareSession(sessionHelpers, reportPath);
+    const results = processAllFiles(findingsByFile, opts);
+    logApplyResults(results, opts);
+    return { success: true, ...results };
+  };
+}
+
+function logApplyHeader(log) {
+  log('Auto-Apply Translations');
+  log('-'.repeat(50));
+}
+
+function buildApplyContext(findingsByFile, opts) {
+  const cwd = process.cwd();
+  const { reportDir } = opts;
+  const filesToBackup = getFilesToBackup(findingsByFile, opts);
+  const reportPath = reportDir ? path.join(reportDir, 'report.json') : null;
+  return { cwd, filesToBackup, reportPath, findingsByFile, opts };
+}
+
+async function confirmAndPrepare(findings, opts) {
+  const { log = console.log, interactive = false } = opts;
+  logApplyHeader(log);
+  const findingsByFile = groupFindingsByFile(findings);
+  const shouldProceed = await confirmFileModifications(findingsByFile, interactive, log);
+  return shouldProceed ? findingsByFile : null;
+}
+
+function executeApplyWithBackup(findingsByFile, opts) {
+  const { log = console.log, backup = true, dryRun = false } = opts;
+  const ctx = buildApplyContext(findingsByFile, opts);
+  const executeApply = createApplyExecutor(ctx);
+  return withBackup({
+    cwd: ctx.cwd,
+    command: 'apply',
+    operation: executeApply,
+    options: { log, backup, dryRun },
+  });
+}
+
 /**
  * Applies translation replacements from findings array
  * @param {Finding[]} findings
@@ -132,17 +215,10 @@ function processAllFiles(findingsByFile, opts) {
  * @returns {Promise<ApplyResult>}
  */
 async function applyFindings(findings, opts = {}) {
-  const { log = console.log, interactive = false } = opts;
-  log('Auto-Apply Translations');
-  log('-'.repeat(50));
-  const findingsByFile = groupFindingsByFile(findings);
-  const shouldProceed = await confirmFileModifications(findingsByFile, interactive, log);
-  if (!shouldProceed) {
-    return { success: false, aborted: true };
-  }
-  const results = processAllFiles(findingsByFile, opts);
-  logApplyResults(results, opts);
-  return { success: true, ...results };
+  const findingsByFile = await confirmAndPrepare(findings, opts);
+  return findingsByFile ?
+      executeApplyWithBackup(findingsByFile, opts)
+    : { success: false, aborted: true };
 }
 
 /**

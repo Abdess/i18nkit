@@ -11,6 +11,7 @@ const COMMAND_CATEGORIES = Object.freeze([
   { id: 'validation', label: 'VALIDATION' },
   { id: 'translation', label: 'TRANSLATION' },
   { id: 'development', label: 'DEVELOPMENT' },
+  { id: 'maintenance', label: 'MAINTENANCE' },
 ]);
 
 const getDescription = cmd => cmd.description || cmd.meta?.description || 'No description';

@@ -50,26 +50,22 @@ function detectDynamicPatterns(content, relPath, dynamicPatterns) {
   }
 }
 
+const QUOTED_STRING_RE = /['"`]([a-zA-Z][a-zA-Z0-9_.]+)['"`]/g;
+
 function scanFileForKeyUsage(ctx) {
-  const { content, relPath, allKeys, keyUsageMap, dynamicPatterns } = ctx;
+  const { content, relPath, keySet, keyUsageMap, dynamicPatterns } = ctx;
   detectDynamicPatterns(content, relPath, dynamicPatterns);
 
-  const keySet = new Set(allKeys.filter(k => !keyUsageMap.get(k)));
-  if (keySet.size === 0) {
-    return;
-  }
-
-  const keyPattern = new RegExp(
-    `['"\`](${[...keySet].map(k => k.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('|')})['"\`]`,
-    'g',
-  );
-  for (const match of content.matchAll(keyPattern)) {
-    keyUsageMap.set(match[1], true);
+  for (const match of content.matchAll(QUOTED_STRING_RE)) {
+    const candidate = match[1];
+    if (keySet.has(candidate)) {
+      keyUsageMap.set(candidate, true);
+    }
   }
 }
 
 async function scanAllFilesForKeys(files, ctx) {
-  const { srcDir, allKeys, keyUsageMap, dynamicPatterns, verbose } = ctx;
+  const { srcDir, keySet, keyUsageMap, dynamicPatterns, verbose } = ctx;
   await Promise.all(
     files.map(async filePath => {
       try {
@@ -77,7 +73,7 @@ async function scanAllFilesForKeys(files, ctx) {
         scanFileForKeyUsage({
           content,
           relPath: path.relative(srcDir, filePath),
-          allKeys,
+          keySet,
           keyUsageMap,
           dynamicPatterns,
         });
@@ -131,10 +127,11 @@ function logOrphanResults(results, log) {
 
 async function scanAndCollect(ctx) {
   const { srcDir, excludedFolders, allKeys, verbose } = ctx;
+  const keySet = new Set(allKeys);
   const keyUsageMap = new Map(allKeys.map(k => [k, false]));
   const dynamicPatterns = [];
   const files = await collectFiles(srcDir, excludedFolders);
-  await scanAllFilesForKeys(files, { srcDir, allKeys, keyUsageMap, dynamicPatterns, verbose });
+  await scanAllFilesForKeys(files, { srcDir, keySet, keyUsageMap, dynamicPatterns, verbose });
   const { usedKeys, orphanKeys } = partitionKeyUsage(keyUsageMap);
   return { usedKeys, orphanKeys, dynamicPatterns, allKeys };
 }

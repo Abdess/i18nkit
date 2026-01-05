@@ -1,74 +1,124 @@
 'use strict';
 
 /**
- * @fileoverview File backup and restore for safe source modifications.
- * Creates timestamped backups before applying changes.
+ * @fileoverview Backward-compatible backup API wrapping new session-based system.
  * @module backup
+ * @deprecated Use backup/index.js for new code
  */
 
-const fs = require('./fs-adapter');
-const path = require('path');
+const backup = require('./backup/index');
 
-const backupFiles = new Map();
+let currentSession = null;
+const legacyBackupFiles = new Map();
 
-function buildBackupPath(filePath, backupDir) {
-  const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
-  const relativePath = path.relative(process.cwd(), filePath);
-  return path.join(backupDir, `${timestamp}_${relativePath.replace(/[/\\]/g, '_')}`);
+function initSessionIfNeeded(cwd) {
+  if (!currentSession) {
+    currentSession = backup.createBackupSession(cwd, 'legacy-apply');
+  }
+  return currentSession;
 }
 
-function writeBackupFile(filePath, backupPath) {
+function tryBackupFile(session, filePath) {
+  const fileInfo = session.backupFile(filePath);
+  const backupPath = require('path').join(session.sessionDir, fileInfo.backup);
+  legacyBackupFiles.set(filePath, backupPath);
+  return backupPath;
+}
+
+function shouldSkipLegacyBackup(enabled, dryRun) {
+  return !enabled || dryRun;
+}
+
+function performLegacyBackup(filePath) {
+  const cwd = process.cwd();
+  const session = initSessionIfNeeded(cwd);
   try {
-    const content = fs.readFileSync(filePath, 'utf-8');
-    fs.writeFileSync(backupPath, content, 'utf-8');
-    backupFiles.set(filePath, backupPath);
-    return backupPath;
+    return tryBackupFile(session, filePath);
   } catch (err) {
     console.warn(`Warning: Cannot backup ${filePath}: ${err.message}`);
     return null;
   }
 }
 
-function shouldSkipBackup(enabled, dryRun) {
-  return !enabled || dryRun;
-}
-
 /**
- * Creates a timestamped backup of a file
- * @param {string} filePath
- * @param {string} backupDir
- * @param {Object} [options]
+ * Creates a backup of a file (legacy API)
+ * @param {string} filePath - File to backup
+ * @param {string} _backupDir - Backup directory (ignored, uses .i18nkit/backups)
+ * @param {Object} [options] - Options
  * @returns {string|null} Backup path or null if skipped
  */
-function createBackup(filePath, backupDir, options = {}) {
+function createBackup(filePath, _backupDir, options = {}) {
   const { enabled = true, dryRun = false } = options;
-  if (shouldSkipBackup(enabled, dryRun)) {
-    return null;
-  }
-  fs.mkdirSync(backupDir, { recursive: true });
-  return writeBackupFile(filePath, buildBackupPath(filePath, backupDir));
+  return shouldSkipLegacyBackup(enabled, dryRun) ? null : performLegacyBackup(filePath);
 }
 
 /**
- * Restores all backed-up files to their original locations
+ * Restores all backed-up files (legacy API)
  * @returns {number} Count of restored files
  */
 function restoreBackups() {
-  let restored = 0;
-  for (const [original, backup] of backupFiles) {
-    try {
-      const content = fs.readFileSync(backup, 'utf-8');
-      fs.writeFileSync(original, content, 'utf-8');
-      restored++;
-    } catch {
-      console.error(`Cannot restore ${original} from ${backup}`);
-    }
+  if (!currentSession) {
+    return 0;
   }
-  return restored;
+  const cwd = process.cwd();
+  const result = backup.restoreSession(cwd, currentSession.id, { verbose: false });
+  return result.restored;
 }
 
+/**
+ * Gets the map of backed-up files (legacy API)
+ * @returns {Map<string, string>}
+ */
 function getBackupFiles() {
-  return backupFiles;
+  return legacyBackupFiles;
 }
 
-module.exports = { createBackup, restoreBackups, getBackupFiles };
+/**
+ * Marks session as ready for modifications (new API bridge)
+ */
+function markReady() {
+  if (currentSession && currentSession.status === 'backing-up') {
+    currentSession.markReady();
+  }
+}
+
+/**
+ * Begins modification phase (new API bridge)
+ */
+function beginModifications() {
+  if (currentSession && currentSession.status === 'ready') {
+    currentSession.beginModifications();
+  }
+}
+
+/**
+ * Completes the backup session (new API bridge)
+ * @param {Object} [stats] - Operation stats
+ */
+function completeSession(stats = {}) {
+  if (currentSession) {
+    currentSession.complete(stats);
+    currentSession = null;
+    legacyBackupFiles.clear();
+  }
+}
+
+/**
+ * Resets session state (for testing)
+ */
+function resetSession() {
+  currentSession = null;
+  legacyBackupFiles.clear();
+}
+
+module.exports = {
+  createBackup,
+  restoreBackups,
+  getBackupFiles,
+  markReady,
+  beginModifications,
+  completeSession,
+  resetSession,
+
+  ...backup,
+};

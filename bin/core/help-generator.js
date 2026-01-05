@@ -165,7 +165,7 @@ function generateFooter() {
 
 PLUGIN LOCATIONS:
   builtin:  <package>/bin/plugins/
-  local:    .i18n/plugins/
+  local:    .i18nkit/plugins/
   npm:      i18nkit-* packages`;
 }
 

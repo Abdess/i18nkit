@@ -543,3 +543,147 @@ describe('edge cases', () => {
     assert.equal(code, 0);
   });
 });
+
+function getSessionDirs(backupsDir) {
+  if (!fs.existsSync(backupsDir)) {
+    return [];
+  }
+  return fs.readdirSync(backupsDir).filter(f => {
+    const fullPath = path.join(backupsDir, f);
+    return fs.statSync(fullPath).isDirectory();
+  });
+}
+
+function getLatestSessionDir(backupsDir) {
+  const sessions = getSessionDirs(backupsDir);
+  return sessions.length > 0 ? sessions[sessions.length - 1] : null;
+}
+
+function findNewSession(sessionsAfter, sessionsBefore) {
+  const previousSessions = new Set(sessionsBefore);
+  return sessionsAfter.find(s => !previousSessions.has(s)) || null;
+}
+
+describe('backup system', () => {
+  before(setupFixtures);
+  after(cleanupFixtures);
+  beforeEach(cleanAppFiles);
+
+  it('should create .i18nkit directory structure', async () => {
+    writeTestFile('test.component.html', '<h1>Backup Test</h1>');
+    writeTestFile(
+      'test.component.ts',
+      `@Component({ templateUrl: './test.component.html' }) export class TestComponent {}`,
+    );
+    await runCLI(['--auto-apply', '--backup']);
+    const i18nkitDir = path.join(FIXTURES_DIR, '.i18nkit');
+    assert.ok(fs.existsSync(i18nkitDir), '.i18nkit directory should exist');
+  });
+
+  it('should create .gitignore in .i18nkit', async () => {
+    writeTestFile('test.html', '<h1>Gitignore Test</h1>');
+    await runCLI(['--auto-apply', '--backup']);
+    const gitignorePath = path.join(FIXTURES_DIR, '.i18nkit', '.gitignore');
+    assert.ok(fs.existsSync(gitignorePath), '.gitignore should exist');
+    const content = fs.readFileSync(gitignorePath, 'utf-8');
+    assert.match(content, /backups\//);
+    assert.match(content, /report\.json/);
+  });
+
+  it('should create backup session with manifest', async () => {
+    writeTestFile('test.html', '<h1>Manifest Test</h1>');
+    await runCLI(['--auto-apply', '--backup']);
+    const backupsDir = path.join(FIXTURES_DIR, '.i18nkit', 'backups');
+    assert.ok(fs.existsSync(backupsDir), 'backups directory should exist');
+    const sessions = getSessionDirs(backupsDir);
+    assert.ok(sessions.length > 0, 'Should have at least one session');
+    const manifestPath = path.join(backupsDir, sessions[0], 'manifest.json');
+    assert.ok(fs.existsSync(manifestPath), 'manifest.json should exist');
+  });
+
+  it('should include reportFile in manifest', async () => {
+    writeTestFile('test.html', '<h1>Report Test</h1>');
+    await runCLI(['--auto-apply', '--backup']);
+    const backupsDir = path.join(FIXTURES_DIR, '.i18nkit', 'backups');
+    const latestSession = getLatestSessionDir(backupsDir);
+    assert.ok(latestSession, 'Should have a session');
+    const manifestPath = path.join(backupsDir, latestSession, 'manifest.json');
+    const manifest = JSON.parse(fs.readFileSync(manifestPath, 'utf-8'));
+    assert.equal(manifest.status, 'completed');
+    assert.ok('reportFile' in manifest, 'manifest should have reportFile field');
+  });
+
+  it('should archive report.json in session folder', async () => {
+    writeTestFile('test.html', '<h1>Archive Test</h1>');
+    await runCLI(['--auto-apply', '--backup']);
+    const backupsDir = path.join(FIXTURES_DIR, '.i18nkit', 'backups');
+    const latestSession = getLatestSessionDir(backupsDir);
+    assert.ok(latestSession, 'Should have a session');
+    const reportPath = path.join(backupsDir, latestSession, 'report.json');
+    assert.ok(fs.existsSync(reportPath), 'report.json should be archived in session');
+  });
+
+  it('should backup source files before modification', async () => {
+    writeTestFile('backup-target.html', '<h1>Original Content</h1>');
+    await runCLI(['--auto-apply', '--backup']);
+    const backupsDir = path.join(FIXTURES_DIR, '.i18nkit', 'backups');
+    const latestSession = getLatestSessionDir(backupsDir);
+    assert.ok(latestSession, 'Should have a session');
+    const srcBackup = path.join(backupsDir, latestSession, 'src', 'app');
+    assert.ok(fs.existsSync(srcBackup), 'src/app backup should exist');
+  });
+
+  it('should skip backup with --no-backup flag', async () => {
+    const backupsDir = path.join(FIXTURES_DIR, '.i18nkit', 'backups');
+    const beforeCount = getSessionDirs(backupsDir).length;
+    writeTestFile('no-backup.html', '<h1>No Backup Test</h1>');
+    await runCLI(['--auto-apply', '--no-backup']);
+    const afterCount = getSessionDirs(backupsDir).length;
+    assert.equal(afterCount, beforeCount, 'No new backup should be created');
+  });
+
+  it('should list backup sessions', async () => {
+    writeTestFile('list-test.html', '<h1>List Test</h1>');
+    await runCLI(['--auto-apply', '--backup']);
+    const { stdout } = await runCLI(['--list-backups']);
+    assert.match(stdout, /Backup Sessions|No backup sessions/i);
+  });
+});
+
+describe('backup manifest schema', () => {
+  before(setupFixtures);
+  after(cleanupFixtures);
+  beforeEach(cleanAppFiles);
+
+  it('should have valid manifest structure', async () => {
+    writeTestFile('schema.html', '<h1>Schema Test</h1>');
+    await runCLI(['--auto-apply', '--backup']);
+    const backupsDir = path.join(FIXTURES_DIR, '.i18nkit', 'backups');
+    const latestSession = getLatestSessionDir(backupsDir);
+    assert.ok(latestSession, 'Should have a session');
+    const manifestPath = path.join(backupsDir, latestSession, 'manifest.json');
+    const manifest = JSON.parse(fs.readFileSync(manifestPath, 'utf-8'));
+    assert.ok(manifest.version, 'manifest should have version');
+    assert.ok(manifest.id, 'manifest should have id');
+    assert.ok(manifest.timestamp, 'manifest should have timestamp');
+    assert.ok(manifest.command, 'manifest should have command');
+    assert.ok(manifest.status, 'manifest should have status');
+    assert.ok(Array.isArray(manifest.files), 'manifest should have files array');
+    assert.ok(manifest.stats, 'manifest should have stats');
+  });
+
+  it('should track correct number of backed up files', async () => {
+    const backupsDir = path.join(FIXTURES_DIR, '.i18nkit', 'backups');
+    const sessionsBefore = getSessionDirs(backupsDir);
+    writeTestFile('file1.html', '<h1>File One</h1>');
+    writeTestFile('file2.html', '<h2>File Two</h2>');
+    await runCLI(['--auto-apply', '--backup']);
+    const sessionsAfter = getSessionDirs(backupsDir);
+    const newSession = findNewSession(sessionsAfter, sessionsBefore);
+    assert.ok(newSession, 'Should have a new session');
+    const manifestPath = path.join(backupsDir, newSession, 'manifest.json');
+    const manifest = JSON.parse(fs.readFileSync(manifestPath, 'utf-8'));
+    assert.ok(manifest.files.length >= 2, 'Should track at least 2 files');
+    assert.ok(manifest.stats.filesBackedUp >= 2, 'Stats should show files backed up');
+  });
+});

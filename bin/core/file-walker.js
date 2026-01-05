@@ -10,6 +10,7 @@ const fs = require('./fs-adapter');
 const path = require('path');
 
 const DEFAULT_EXCLUDED_FOLDERS = ['node_modules', 'dist', '.git', 'coverage', 'e2e', '.angular'];
+const DEFAULT_EXCLUDED_SET = new Set(DEFAULT_EXCLUDED_FOLDERS);
 
 const VALID_SOURCE_RE = /\.(ts|html)$/;
 const EXCLUDED_SOURCE_RE = /\.(spec|test|e2e|mock)\./;
@@ -22,28 +23,34 @@ function validateDir(dir) {
   }
 }
 
-function shouldSkipEntry(entry, excludedFolders) {
-  return excludedFolders.includes(entry.name);
+function shouldSkipEntry(entry, excludedSet) {
+  return excludedSet.has(entry.name);
 }
 
-async function* processEntry(entry, dir, excludedFolders) {
+async function* processEntry(entry, dir, excludedSet) {
   const filePath = path.join(dir, entry.name);
   if (entry.isDirectory()) {
-    yield* walkDirAsync(filePath, excludedFolders);
+    yield* walkDirRecursive(filePath, excludedSet);
   } else if (isValidSourceFile(entry.name)) {
     yield filePath;
   }
 }
 
-async function* walkDirAsync(dir, excludedFolders = DEFAULT_EXCLUDED_FOLDERS) {
+async function* walkDirRecursive(dir, excludedSet) {
   validateDir(dir);
   const entries = await fs.readdir(dir, { withFileTypes: true });
   for (const entry of entries) {
-    if (shouldSkipEntry(entry, excludedFolders)) {
+    if (shouldSkipEntry(entry, excludedSet)) {
       continue;
     }
-    yield* processEntry(entry, dir, excludedFolders);
+    yield* processEntry(entry, dir, excludedSet);
   }
+}
+
+async function* walkDirAsync(dir, excludedFolders = DEFAULT_EXCLUDED_FOLDERS) {
+  const excludedSet =
+    Array.isArray(excludedFolders) ? new Set(excludedFolders) : DEFAULT_EXCLUDED_SET;
+  yield* walkDirRecursive(dir, excludedSet);
 }
 
 /**
@@ -109,17 +116,24 @@ function handleHtmlFile(content, filePath, processedTemplates) {
   return { template: content, typescript: null, type: 'html' };
 }
 
+function removeMatchedSections(content, matches) {
+  const parts = [];
+  let lastIndex = 0;
+  for (const m of matches) {
+    parts.push(content.slice(lastIndex, m.index));
+    lastIndex = m.index + m[0].length;
+  }
+  parts.push(content.slice(lastIndex));
+  return parts.join('');
+}
+
 function extractInlineTemplate(content) {
   const templateMatches = [...content.matchAll(/template\s*:\s*`([\s\S]*?)`/g)];
   if (templateMatches.length === 0) {
     return { template: null, tsCode: content };
   }
   const template = templateMatches.map(m => m[1]).join('\n');
-  let tsCode = content;
-  for (const m of templateMatches) {
-    tsCode = tsCode.replace(m[0], '');
-  }
-  return { template, tsCode };
+  return { template, tsCode: removeMatchedSections(content, templateMatches) };
 }
 
 function resolveTemplatePath(content, filePath) {

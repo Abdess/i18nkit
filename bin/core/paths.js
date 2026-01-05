@@ -43,14 +43,14 @@ function resolveOutputFile(ctx) {
 function resolvePaths(ctx) {
   const { args, config, cwd, lang = null } = ctx;
   const i18nDir = resolveI18nDir(args, config, cwd);
-  const reportDir = path.join(cwd, '.i18n');
+  const i18nkitDir = path.join(cwd, '.i18nkit');
   return {
     srcDir: resolveSrcDir(args, config, cwd),
     i18nDir,
-    reportDir,
-    backupDir: path.join(reportDir, 'backup'),
+    reportDir: i18nkitDir,
+    backupDir: path.join(i18nkitDir, 'backups'),
     outputFile: resolveOutputFile({ args, config, i18nDir, lang }),
-    keyMappingFile: path.join(cwd, '.i18n-keys.json'),
+    keyMappingFile: path.join(i18nkitDir, 'keys.json'),
     excludedFolders: config.excludedFolders || DEFAULT_EXCLUDED_FOLDERS,
   };
 }

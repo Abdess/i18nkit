@@ -10,7 +10,7 @@ const fs = require('./fs-adapter');
 const path = require('path');
 
 const BUILTIN_DIR = path.join(__dirname, '..', 'plugins');
-const LOCAL_DIR = '.i18n/plugins';
+const LOCAL_DIR = '.i18nkit/plugins';
 
 /** @type {Record<string, string>} */
 const BUILTIN_ALIASES = {
