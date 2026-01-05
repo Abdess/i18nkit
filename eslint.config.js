@@ -4,7 +4,7 @@ const globals = require('globals');
 /** @type {import('eslint').Linter.Config[]} */
 module.exports = [
   {
-    ignores: ['node_modules/**', 'coverage/**', 'dist/**', '.i18n/**'],
+    ignores: ['node_modules/**', 'coverage/**', 'dist/**', '.i18n/**', 'docs/**'],
   },
   js.configs.recommended,
   {
