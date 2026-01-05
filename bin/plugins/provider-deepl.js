@@ -27,19 +27,33 @@ function buildDeepLRequest(texts, ctx) {
   };
 }
 
-async function translate(text, ctx) {
-  const result = await translateBatch([text], ctx);
-  return result[0];
-}
-
-async function translateBatch(texts, ctx) {
-  const apiKey = getApiKey(ctx);
-  const response = await fetch(getEndpoint(apiKey), buildDeepLRequest(texts, { ...ctx, apiKey }));
+async function doTranslateBatch(ctx) {
+  const { texts, fromLang, toLang, options = {} } = ctx;
+  const apiKey = getApiKey(options);
+  const response = await fetch(
+    getEndpoint(apiKey),
+    buildDeepLRequest(texts, { fromLang, toLang, apiKey }),
+  );
   if (!response.ok) {
     throw new Error(`DeepL API error: ${response.status} - ${await response.text()}`);
   }
   const data = await response.json();
   return data.translations.map(t => t.text);
+}
+
+async function translate(ctx) {
+  const { text, fromLang, toLang, options = {} } = ctx;
+  const result = await doTranslateBatch({ texts: [text], fromLang, toLang, options });
+  return result[0];
+}
+
+async function translateBatch(ctx) {
+  const { texts, fromLang, toLang, options = {} } = ctx;
+  const translated = await doTranslateBatch({ texts, fromLang, toLang, options });
+  return {
+    translationMap: new Map(texts.map((t, i) => [t, translated[i]])),
+    failedCount: 0,
+  };
 }
 
 module.exports = {

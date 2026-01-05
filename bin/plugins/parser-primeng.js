@@ -37,7 +37,7 @@ const PRIMENG_PATTERNS = [
     context: 'buttons',
     attr: 'chooseLabel',
   },
-  { regex: /<p-(?:chip|tag)[^>]*\blabel="([^"]+)"/gi, context: 'labels', attr: 'label' },
+  { regex: /<p-(?:chip|tag)[^>]*\b(?:label|value)="([^"]+)"/gi, context: 'labels', attr: 'value' },
   {
     regex: /<p-(?:inputNumber|calendar)[^>]*\b(?:prefix|suffix)="([^"]+)"/gi,
     context: 'labels',

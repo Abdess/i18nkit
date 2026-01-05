@@ -50,7 +50,11 @@ function logTranslationSummary(ctx) {
 
 async function executeDeepLTranslation(ctx) {
   const { uniqueValues, sourceLang, targetLang, provider } = ctx;
-  const translated = await provider.translateBatch(uniqueValues, sourceLang, targetLang);
+  const translated = await provider.translateBatch({
+    texts: uniqueValues,
+    fromLang: sourceLang,
+    toLang: targetLang,
+  });
   return {
     translationMap: new Map(uniqueValues.map((v, i) => [v, translated[i]])),
     failedCount: 0,
@@ -59,13 +63,18 @@ async function executeDeepLTranslation(ctx) {
 
 function executeMyMemoryTranslation(ctx) {
   const { uniqueValues, sourceLang, targetLang, provider, email, verbose } = ctx;
-  return provider.translateBatch(uniqueValues, sourceLang, targetLang, {
-    email,
-    verbose,
-    onProgress: (processed, total) => {
-      if (processed < total) {
-        process.stdout.write(`\r  Progress: ${processed}/${total}`);
-      }
+  return provider.translateBatch({
+    texts: uniqueValues,
+    fromLang: sourceLang,
+    toLang: targetLang,
+    options: {
+      email,
+      verbose,
+      onProgress: (processed, total) => {
+        if (processed < total) {
+          process.stdout.write(`\r  Progress: ${processed}/${total}`);
+        }
+      },
     },
   });
 }

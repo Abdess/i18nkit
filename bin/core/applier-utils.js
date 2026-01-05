@@ -68,12 +68,12 @@ function applyReplacementsToContent(content, fileFindings, adapter) {
   let result = content;
   let count = 0;
   for (const finding of fileFindings) {
-    const transformed = adapter.transform(
-      result,
-      finding.rawText || finding.text,
-      finding.key,
-      finding.context,
-    );
+    const transformed = adapter.transform({
+      content: result,
+      rawText: finding.rawText || finding.text,
+      key: finding.key,
+      context: finding.context,
+    });
     result = transformed.content;
     count += transformed.replacements;
   }

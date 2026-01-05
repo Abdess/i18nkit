@@ -22,6 +22,7 @@ const TRANSLATABLE_ATTRS = [
   'defaultLabel',
   'selectedItemsLabel',
   'text',
+  'value',
 ];
 
 const ATTR_REPLACEMENT_MAP = Object.fromEntries(
@@ -29,7 +30,7 @@ const ATTR_REPLACEMENT_MAP = Object.fromEntries(
 );
 
 const TAG_CONTENT_RE =
-  /(<(?:h[1-6]|p|span|div|li|td|th|a|button|label|option)[^>]*>)\s*(.+?)\s*(<\/(?:h[1-6]|p|span|div|li|td|th|a|button|label|option)>)/gi;
+  /(<(?:h[1-6]|p|span|div|li|td|th|a|button|label|option)[^>]*>)\s*([^<]+?)\s*(<\/(?:h[1-6]|p|span|div|li|td|th|a|button|label|option)>)/gi;
 
 const hasTranslocoPipe = content => /\bTranslocoPipe\b/.test(content);
 const hasTranslocoImport = content => /@jsverse\/transloco/.test(content);
@@ -140,7 +141,7 @@ module.exports = {
 
   transform(ctx) {
     const { content, rawText, key, context } = ctx;
-    if (context.startsWith('ts_')) {
+    if (context?.startsWith('ts_')) {
       return { content, replacements: 0 };
     }
     return transformTemplate({ content, rawText, key });
